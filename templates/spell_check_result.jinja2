@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The One and Only Spell Checker</title>
+</head>
+<body>
+
+<div>
+    {% if status['status_message'] != '' %}
+        <p id="{{ status['element_id'] }}">{{ status['status_message'] }}</p>
+    {% endif %}
+</div>
+
+{% if uid != None %}
+
+
+    <div>
+        <p>And your results are</p>
+    </div>
+
+    <div>
+        <p> Your text was</p>
+        <p id="textout">{{ text }}</p>
+    </div>
+
+        <div>
+        <p> Misspelled words</p>
+        <p id="misspelled">{{ misspelled }}</p>
+    </div>
+
+{% else %}
+
+    <p> Login FIRST!</p>
+
+{% endif %}
+
+</body>
+</html>

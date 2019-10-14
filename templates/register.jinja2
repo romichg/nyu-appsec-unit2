@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roman's Spell Checker Registration Page</title>
+</head>
+<body>
+
+<div>
+    {% if status['status_message'] != '' %}
+        <p id="{{ status['element_id'] }}">{{ status['status_message'] }}</p>
+    {% endif %}
+</div>
+
+<div>
+    <p>Welcome to Roman's awesome Spell Checker. First please Register</p>
+</div>
+
+<div>
+    <form method="post">
+        <div>
+            <br>
+            <label for="uname">Enter User Name</label>
+            <br>
+            <input type="text" name="uname" id="uname"/>
+        </div>
+
+        <div>
+            <br>
+            <label for="pword">Enter Password, it is safe. We store it securely in plain text</label>
+            <br>
+            <input type="pword" name="pword" id="pword"/>
+        </div>
+
+        <div>
+            <br>
+            <label for="2fa">Enter Your Phone Number</label>
+            <br>
+            <input type="text" name="2fa" id="2fa"/>
+        </div>
+        <div>
+            <br>
+            <input type="submit" />
+        </div>
+    </form>
+</div>
+</body>
+</html>
