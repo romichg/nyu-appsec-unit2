@@ -22,7 +22,7 @@
         <form method="post">
             <textarea name="inputtext" id="inputtext" cols="50" rows="5"></textarea>
             <br/>
-            <input type="hidden" name="token" value="{{ token }}"/>
+            <input id="csrf_token" name="csrf_token" type="hidden" value="{{ csrf_token }}">
             <input type="submit"/>
         </form>
     </div>
