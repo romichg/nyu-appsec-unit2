@@ -1,11 +1,13 @@
 from flask import Flask, request, url_for, render_template, redirect, session
+from random import random
+import subprocess
+import os
 
 # setting up the app
 SECRET_KEY = 'supersecretkey'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
-
 
 # our users "database"
 users = {
@@ -72,6 +74,13 @@ def register():
         pword = request.form.get('pword')  # TODO: look ma, cleartext password
         two_fa = request.form.get('2fa')
         uid = len(users) + 100
+        token = request.form.get('token')
+
+        # CSRF Check
+        our_token = session.get('token')
+        if token != our_token:
+            return render_template('404.html')
+        session.pop('token', None)
 
         # Registration Checks
         # TODO: Validate input
@@ -82,14 +91,16 @@ def register():
 
         # If our status is set registration failed
         if is_status():
-            return render_template('register.jinja2', status=get_status())
+            session['token'] = str(random())  # Implement basic CSRF protection
+            return render_template('register.jinja2', status=get_status(), token=session.get('token'))
 
         # Otherwise register user
         users[uname] = {'uid': uid, 'pword': pword, 'two_fa': two_fa}
         set_status('Registration success - now please login', 'success')
         return redirect(url_for('login'))
     else:
-        return render_template('register.jinja2', status=get_status())
+        session['token'] = str(random())  # Implement basic CSRF protection
+        return render_template('register.jinja2', status=get_status(), token=session.get('token'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -98,11 +109,19 @@ def login():
         uname = request.form.get('uname')
         pword = request.form.get('pword')  # TODO: look ma, cleartext password
         two_fa = request.form.get('2fa')
+        token = request.form.get('token')
+
+        # CSRF Check
+        our_token = session.get('token')
+        if token != our_token:
+            return render_template('404.html')
+        session.pop('token', None)
 
         # TODO: Validate input
 
         if not login_user(uname, pword, two_fa):
-            return render_template('login.jinja2', status=get_status())
+            session['token'] = str(random())  # Implement basic CSRF protection
+            return render_template('login.jinja2', status=get_status(), token=session.get('token'))
 
         # Yeepee - looks like we have a valid user lets log them in
         user = users.get(uname)
@@ -111,7 +130,8 @@ def login():
         return redirect(url_for('spell_check'))
 
     else:
-        return render_template('login.jinja2', status=get_status())
+        session['token'] = str(random())  # Implement basic CSRF protection
+        return render_template('login.jinja2', status=get_status(), token=session.get('token'))
 
 
 @app.route('/spell_check', methods=['GET', 'POST'])
@@ -125,18 +145,41 @@ def spell_check():
             return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'))
 
         inputtext = request.form.get('inputtext')
+        token = request.form.get('token')
+
+        # CSRF Check
+        our_token = session.get('token')
+        if token != our_token:
+            return render_template('404.html')
+        session.pop('token', None)
 
         # TODO: validate input
-        # TODO: Actually implement spell checker
+
+        # Do the spell check
+        file_to_check = open('file_to_check.txt', "w+")
+        file_to_check.write(inputtext)
+        file_to_check.close()
+
+        spell_proc = subprocess.run(
+            ['./a.out', './file_to_check.txt', './wordlist.txt'],
+            stdout=subprocess.PIPE,
+        )
+        os.remove('./file_to_check.txt')
+
+        if spell_proc.returncode != 0:
+            return render_template('404.html')
 
         text = inputtext
-        misspelled = 'this is a list of misspelled words'
+        output = spell_proc.stdout.decode('utf-8')
+        misspelled = output.replace("\n", ", ").strip().strip(',')
 
-        return render_template('spell_check_result.jinja2', status=get_status(), uid=session.get('uid'), text=text, misspelled=misspelled)
-
+        return render_template('spell_check_result.jinja2', status=get_status(), uid=session.get('uid'), text=text,
+                               misspelled=misspelled)
     else:
         uid = session.get('uid')
-        return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'))
+        session['token'] = str(random())  # Implement basic CSRF protection
+        return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'),
+                               token=session.get('token'))
 
 
 if __name__ == '__main__':
