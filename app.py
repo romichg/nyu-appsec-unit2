@@ -154,6 +154,14 @@ def spell_check():
         session.pop('token', None)
 
         # TODO: validate input
+        if len(inputtext) <=0:
+            set_status('Please enter some text', 'status')
+            uid = session.get('uid')
+            session['token'] = str(random())  # Implement basic CSRF protection
+            return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'),
+                                   token=session.get('token'))
+
+
 
         # Do the spell check
         file_to_check = open('file_to_check.txt', "w+")
