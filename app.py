@@ -148,9 +148,9 @@ def spell_check():
         token = request.form.get('token')
 
         # CSRF Check
-#        our_token = session.get('token')
-#        if token != our_token:
-#            return render_template('404.html')
+        our_token = session.get('token')
+        if token != our_token:
+            return render_template('404.html')
         session.pop('token', None)
 
         # TODO: validate input
