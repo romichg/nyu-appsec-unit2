@@ -154,7 +154,7 @@ def spell_check():
         session.pop('token', None)
 
         # TODO: validate input
-        if len(inputtext) <=0:
+        if inputtext is not None and len(inputtext) <= 0:
             set_status('Please enter some text', 'status')
             uid = session.get('uid')
             session['token'] = str(random())  # Implement basic CSRF protection
