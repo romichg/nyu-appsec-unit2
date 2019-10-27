@@ -2,9 +2,11 @@ from flask import Flask, request, url_for, render_template, redirect, session
 from random import random
 import subprocess
 import os
+import re
 
 # setting up the app
 SECRET_KEY = 'supersecretkey'
+MAX_INPUT_LENGTH = 50
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -13,7 +15,7 @@ app.config.from_object(__name__)
 users = {
     'roman': {
         'uid': 100,
-        'pword': 'letmein',  # TODO: look ma, default credentials with clear text password
+        'pword': 'SuperSecureLong1!PW@',  # TODO: look ma, default credentials with clear text password
         'two_fa': '9876543210'
     }
 }
@@ -38,6 +40,10 @@ def is_status():
         return True
     else:
         return False
+
+
+def is_ascii(s):
+    return s.isascii()
 
 
 def login_user(uname, pword, two_fa):
@@ -66,6 +72,31 @@ def login_user(uname, pword, two_fa):
     return True
 
 
+def validate_registration_or_login(uname, pword, two_fa):
+    if not is_ascii(uname):
+        return False
+    if not is_ascii(pword):
+        return False
+    if not is_ascii(two_fa):
+        return False
+    if len(uname) > MAX_INPUT_LENGTH:
+        return False
+    if len(pword) > MAX_INPUT_LENGTH:
+        return False
+    if len(two_fa) > MAX_INPUT_LENGTH:
+        return False
+    if len(two_fa) != 10:
+        return False
+    if not bool(re.match('^[0-9]{10}$', two_fa)):
+        return False
+    if not re.findall('^.*(?=.{8,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$', pword):
+        return False
+
+    return True
+
+
+
+
 # Our route begins
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -83,8 +114,9 @@ def register():
         session.pop('csrf_token', None)
 
         # Registration Checks
-        # TODO: Validate input
-        # TODO: Check for password complexity
+        if not validate_registration_or_login(uname, pword, two_fa):
+            set_status('Registration failure - bad input', 'success')
+
         # does user already exist
         if uname in users:
             set_status('Registration failure - user exists', 'success')
@@ -117,9 +149,13 @@ def login():
 #            return render_template('404.html')
         session.pop('csrf_token', None)
 
-        # TODO: Validate input
+        if not validate_registration_or_login(uname, pword, two_fa):
+            set_status('Login failed - invalid input', 'result')
 
-        if not login_user(uname, pword, two_fa):
+        login_result = login_user(uname, pword, two_fa)
+
+        if is_status() or not login_result:
+            # If our status is set, or login explicitly failed - failed
             session['csrf_token'] = str(random())  # Implement basic CSRF protection
             return render_template('login.jinja2', status=get_status(), csrf_token=session.get('csrf_token'))
 
