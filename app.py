@@ -3,13 +3,20 @@ from random import random
 import subprocess
 import os
 import re
-
+from flask_talisman import Talisman
+from jinja2 import Environment, select_autoescape
+env = Environment(autoescape=select_autoescape(
+    disabled_extensions=('txt',),
+    default_for_string=True,
+    default=True,
+))
 # setting up the app
 SECRET_KEY = 'supersecretkey'
 MAX_INPUT_LENGTH = 50
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+Talisman(app, force_https=False, strict_transport_security=False, session_cookie_secure=False)
 
 # our users "database"
 users = {
@@ -124,7 +131,7 @@ def register():
         # If our status is set registration failed
         if is_status():
             session['csrf_token'] = str(random())  # Implement basic CSRF protection
-            return render_template('register.jinja2', status=get_status(), csrf_token=session.get('csrf_token'))
+            return render_template('register.html', status=get_status(), csrf_token=session.get('csrf_token'))
 
         # Otherwise register user
         users[uname] = {'uid': uid, 'pword': pword, 'two_fa': two_fa}
@@ -132,7 +139,7 @@ def register():
         return redirect(url_for('login'))
     else:
         session['csrf_token'] = str(random())  # Implement basic CSRF protection
-        return render_template('register.jinja2', status=get_status(), csrf_token=session.get('csrf_token'))
+        return render_template('register.html', status=get_status(), csrf_token=session.get('csrf_token'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -157,7 +164,7 @@ def login():
         if is_status() or not login_result:
             # If our status is set, or login explicitly failed - failed
             session['csrf_token'] = str(random())  # Implement basic CSRF protection
-            return render_template('login.jinja2', status=get_status(), csrf_token=session.get('csrf_token'))
+            return render_template('login.html', status=get_status(), csrf_token=session.get('csrf_token'))
 
         # Yeepee - looks like we have a valid user lets log them in
         user = users.get(uname)
@@ -167,7 +174,7 @@ def login():
 
     else:
         session['csrf_token'] = str(random())  # Implement basic CSRF protection
-        return render_template('login.jinja2', status=get_status(), csrf_token=session.get('csrf_token'))
+        return render_template('login.html', status=get_status(), csrf_token=session.get('csrf_token'))
 
 
 @app.route('/spell_check', methods=['GET', 'POST'])
@@ -178,7 +185,7 @@ def spell_check():
         user = session.get('uid')
         if user is None:
             set_status('Authentication required', 'success')
-            return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'))
+            return render_template('spell_check.html', status=get_status(), uid=session.get('uid'))
 
         inputtext = request.form.get('inputtext')
         csrf_token = request.form.get('csrf_token')
@@ -189,12 +196,19 @@ def spell_check():
             return render_template('404.html')
         session.pop('csrf_token', None)
 
-        # TODO: validate input
         if inputtext is None or len(inputtext) <= 0:
             set_status('Please enter some text', 'status')
+
+        if len(inputtext) > 500:
+            set_status('Invalid input', 'status')
+
+        if not is_ascii(inputtext):
+            set_status('Invalid input', 'status')
+
+        if is_status():
             uid = session.get('uid')
             session['csrf_token'] = str(random())  # Implement basic CSRF protection
-            return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'),
+            return render_template('spell_check.html', status=get_status(), uid=session.get('uid'),
                                    csrf_token=session.get('csrf_token'))
 
 
@@ -217,12 +231,12 @@ def spell_check():
         output = spell_proc.stdout.decode('utf-8')
         misspelled = output.replace("\n", ", ").strip().strip(',')
 
-        return render_template('spell_check_result.jinja2', status=get_status(), uid=session.get('uid'), text=text,
+        return render_template('spell_check_result.html', status=get_status(), uid=session.get('uid'), text=text,
                                misspelled=misspelled)
     else:
         uid = session.get('uid')
         session['csrf_token'] = str(random())  # Implement basic CSRF protection
-        return render_template('spell_check.jinja2', status=get_status(), uid=session.get('uid'),
+        return render_template('spell_check.html', status=get_status(), uid=session.get('uid'),
                                csrf_token=session.get('csrf_token'))
 
 
