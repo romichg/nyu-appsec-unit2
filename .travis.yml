@@ -1,0 +1,9 @@
+os: linux
+language: python
+python:
+  - "3.7"
+install:
+  - pip3 install -r requirements.tx
+script:
+  - flask run --host=127.0.0.1 --port=1337 &
+  - pytest
