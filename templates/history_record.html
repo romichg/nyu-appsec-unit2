@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Query History</title>
+</head>
+<body>
+
+{% if uid != None %}
+
+<div>
+    {% if status['status_message'] != '' %}
+        <p id="{{ status['element_id'] }}">{{ status['status_message'] }}</p>
+    {% endif %}
+</div>
+
+    <div>
+        <p id="queryid">{{ query_record.query_id }}</p>
+        <p id="username">{{ username }}</p>
+        <p id="querytext">{{ query_record.text_to_check}}</p>
+        <p id="queryresults">{{ query_record.misspelled }}</p>
+    </div>
+
+{%  else %}
+
+    <p> Login FIRST!</p>
+
+{% endif %}
+
+</body>
+</html>

@@ -3,3 +3,5 @@ __pycache__
 virtenv
 .tox
 .pytest_cache
+users.db
+flask_session

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Query History</title>
+</head>
+<body>
+
+{% if uid != None %}
+
+<div>
+    {% if status['status_message'] != '' %}
+        <p id="{{ status['element_id'] }}">{{ status['status_message'] }}</p>
+    {% endif %}
+</div>
+
+
+    {% if numqueries is defined %}
+        <div>
+            <p> Total number of queries is</p>
+            <p id="numqueries">{{ numqueries }}</p>
+        </div>
+    {% endif %}
+
+    <div>
+        <ul>
+            {% for query_record in query_records %}
+                <li id={{ query_record.query_id }}><a
+                        href="/history/{{ query_record.query_id }}">Query {{ query_record.query_id }} </a></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+
+    {% if user_type == 0 %}
+        <div>
+            <form method="post">
+                <br>
+                <label for="userquery">Enter User Name</label>
+                <br>
+                <input type="text" name="userquery" id="userquery"/>
+                <br>
+                <input type="submit"/>
+            </form>
+        </div>
+    {% endif %}
+
+{%  else %}
+
+    <p> Login FIRST!</p>
+
+{% endif %}
+
+</body>
+</html>
