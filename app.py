@@ -132,9 +132,7 @@ def is_status():
 
 
 def is_ascii(s):
-# lets get the autograder, no security
-    return True
-#    return s.isascii()
+    return s.isascii()
 
 
 # DB Utils
