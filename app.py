@@ -469,7 +469,7 @@ def history():
                                numqueries=numqueries, user_type=user_record.user_type)
 
 
-@app.route('/history/<int:query_id>', methods=['GET'])
+@app.route('/history/query<int:query_id>', methods=['GET'])
 def history_query_record(query_id):
     # Access control check - make sure the user can do this
     this_user_record = get_user_record_by_uid(session.get('uid'))

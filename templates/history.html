@@ -25,8 +25,8 @@
     <div>
         <ul>
             {% for query_record in query_records %}
-                <li id={{ query_record.query_id }}><a
-                        href="/history/{{ query_record.query_id }}">Query {{ query_record.query_id }} </a></li>
+                <li id="query{{ query_record.query_id }}"><a id="query{{ query_record.query_id }}"
+                        href="/history/query{{ query_record.query_id }}">Query {{ query_record.query_id }} </a></li>
             {% endfor %}
         </ul>
     </div>
