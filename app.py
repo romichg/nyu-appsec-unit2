@@ -24,13 +24,21 @@ env = Environment(autoescape=select_autoescape(
 
 # setting up the app
 
+# get our secrets
+try:
+    session_key_file = open('/run/secrets/session_key ', "r")
+    session_key = session_key_file.read()
+    session_key_file.close()
+except FileNotFoundError:
+    session_key = 'defaultsupersecretkey'
+
 
 MAX_INPUT_LENGTH = 50
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 # Setting up the session
-SECRET_KEY = 'supersecretkey'
+SECRET_KEY = session_key
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
 Session(app)
@@ -70,7 +78,7 @@ class User(BASE):
 
 class LoginRecord(BASE):
     __tablename__ = 'login_records'
-    record_number =  Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     uid = Column(Integer, ForeignKey('users.uid'), nullable=False)
     time_on = Column(DateTime, nullable=False)
     user = relationship(User)
@@ -166,6 +174,16 @@ def get_query_history_by_uid_with_query_ids(uid):
     return query_history
 
 
+def get_login_history_by_uid_with_login_ids(uid):
+    try:
+        my_login_history = db_session.query(LoginRecord).filter(LoginRecord.uid == uid).all()
+    except exc.SQLAlchemyError as err:
+        set_status('Failed to fetch query history, db error', 'result')
+        return None
+
+    return my_login_history
+
+
 def get_query_history_record_by_uid_and_query_id(uid, query_id):
     try:
         query_history_record = db_session.query(QueryHistoryRecord).filter(QueryHistoryRecord.uid == uid,
@@ -223,8 +241,6 @@ def login_user(uname, pword, two_fa):
 
 
 def validate_registration_or_login(uname, pword, two_fa):
-    return True
-
     if not is_ascii(uname):
         return False
     if not is_ascii(pword):
@@ -424,6 +440,8 @@ def history():
             set_status('Authentication required', 'success')
             return render_template('history.html', status=get_status(), uid=session.get('uid'))
 
+        session['csrf_token'] = str(random())  # Implement basic CSRF protection
+
         numqueries = 0
         query_records = get_query_history_by_uid_with_query_ids(session.get('uid'))
         if query_records is not None:
@@ -431,10 +449,11 @@ def history():
         if numqueries <= 0:
             set_status('No history found', 'status')
             return render_template('history.html', status=get_status(), uid=session.get('uid'), numqueries=numqueries,
-                                   user_type=user_record.user_type)
+                                   user_type=user_record.user_type, csrf_token=session.get('csrf_token'))
 
         return render_template('history.html', status=get_status(), uid=session.get('uid'), query_records=query_records,
-                               numqueries=numqueries, user_type=user_record.user_type)
+                               numqueries=numqueries, user_type=user_record.user_type,
+                               csrf_token=session.get('csrf_token'))
 
     if request.method == 'POST':
         # Access control check - make sure the user can do this
@@ -442,6 +461,16 @@ def history():
         if user_record is None:
             set_status('Authentication required', 'success')
             return render_template('history.html', status=get_status(), uid=session.get('uid'))
+
+        csrf_token = request.form.get('csrf_token')
+
+        # CSRF Check
+        our_token = session.get('csrf_token')
+        if csrf_token != our_token:
+            return render_template('404.html')
+        session.pop('csrf_token', None)
+
+        session['csrf_token'] = str(random())  # Implement basic CSRF protection
 
         # Make sure we are an admin
         if user_record.user_type != 0:
@@ -461,10 +490,12 @@ def history():
             numqueries = len(query_records)
         if numqueries <= 0:
             set_status('No history found', 'status')
-            return render_template('history.html', status=get_status(), uid=session.get('uid'), numqueries=numqueries)
+            return render_template('history.html', status=get_status(), uid=session.get('uid'), numqueries=numqueries,
+                                   csrf_token=session.get('csrf_token'))
 
         return render_template('history.html', status=get_status(), uid=session.get('uid'), query_records=query_records,
-                               numqueries=numqueries, user_type=user_record.user_type)
+                               numqueries=numqueries, user_type=user_record.user_type,
+                               csrf_token=session.get('csrf_token'))
 
 
 @app.route('/history/query<int:query_id>', methods=['GET'])
@@ -504,6 +535,71 @@ def history_query_record(query_id):
 
     return render_template('history_record.html', status=get_status(), uid=session.get('uid'),
                            query_record=query_record, username=uname)
+
+
+@app.route('/login_history', methods=['GET', 'POST'])
+def login_history():
+    if request.method == 'GET':
+        # Access control check - make sure the user can do this
+        user_record = get_user_record_by_uid(session.get('uid'))
+        if user_record is None:
+            set_status('Authentication required', 'success')
+            return render_template('login_history.html', status=get_status(), uid=session.get('uid'))
+
+        session['csrf_token'] = str(random())  # Implement basic CSRF protection
+
+        # Make sure we are an admin
+        if user_record.user_type != 0:
+            set_status('You are not an admin, go home.', 'success')
+            return render_template('login_history.html', status=get_status(), uid=session.get('uid'),
+                                   user_type=user_record.user_type, )
+
+        return render_template('login_history.html', status=get_status(), uid=session.get('uid'),
+                               csrf_token=session.get('csrf_token'), user_type=user_record.user_type, )
+
+    if request.method == 'POST':
+        # Access control check - make sure the user can do this
+        user_record = get_user_record_by_uid(session.get('uid'))
+        if user_record is None:
+            set_status('Authentication required', 'success')
+            return render_template('login_history.html', status=get_status(), uid=session.get('uid'))
+
+        csrf_token = request.form.get('csrf_token')
+
+        # CSRF Check
+        our_token = session.get('csrf_token')
+        if csrf_token != our_token:
+            return render_template('404.html')
+        session.pop('csrf_token', None)
+
+        session['csrf_token'] = str(random())  # Implement basic CSRF protection
+
+        # Make sure we are an admin
+        if user_record.user_type != 0:
+            set_status('You are not an admin, go home.', 'success')
+            return render_template('login_history.html', status=get_status(), uid=session.get('uid'))
+
+        userquery = request.form.get('userquery')
+        rr_user_record = get_user_record_by_uname(userquery)
+
+        if rr_user_record is None:
+            set_status('Este usario no existe, va a la casa', 'status')
+            return render_template('login_history.html', status=get_status(), uid=session.get('uid'))
+
+        numrecords = 0
+        login_records = get_login_history_by_uid_with_login_ids(rr_user_record.uid)
+        if login_records is not None:
+            numrecords = len(login_records)
+        if numrecords <= 0:
+            set_status('No login history found', 'status')
+            return render_template('login_history.html', status=get_status(), uid=session.get('uid'),
+                                   user_type=user_record.user_type,
+                                   csrf_token=session.get('csrf_token'))
+
+        return render_template('login_history.html', status=get_status(), uid=session.get('uid'),
+                               login_records=login_records,
+                               user_type=user_record.user_type,
+                               csrf_token=session.get('csrf_token'))
 
 
 if __name__ == '__main__':

@@ -8,31 +8,24 @@
 
 {% if uid != None %}
 
-<div>
-    {% if status['status_message'] != '' %}
-        <p id="{{ status['element_id'] }}">{{ status['status_message'] }}</p>
-    {% endif %}
-</div>
-
-
-    {% if numqueries is defined %}
-        <div>
-            <p> Total number of queries is</p>
-            <p id="numqueries">{{ numqueries }}</p>
-        </div>
-    {% endif %}
-
     <div>
-        <ul>
-            {% for query_record in query_records %}
-                <li><a id="query{{ query_record.query_id }}"
-                        href="/history/query{{ query_record.query_id }}">Query {{ query_record.query_id }} </a></li>
-            {% endfor %}
-        </ul>
+        {% if status['status_message'] != '' %}
+            <p id="{{ status['element_id'] }}">{{ status['status_message'] }}</p>
+        {% endif %}
     </div>
 
-
     {% if user_type == 0 %}
+
+        <div>
+            <ul>
+                {% for login_record in login_records %}
+                    <li id="login{{ login_record.id }}">login{{ login_record.id }}_{{ login_record.time_on }}</li>
+                    <li id="logout{{ login_record.id }}">login{{ login_record.id }}_N/A</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+
         <div>
             <form method="post">
                 <br>
@@ -44,9 +37,11 @@
                 <input type="submit"/>
             </form>
         </div>
+
+
     {% endif %}
 
-{%  else %}
+{% else %}
 
     <p> Login FIRST!</p>
 
