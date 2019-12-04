@@ -32,6 +32,13 @@ try:
 except FileNotFoundError:
     session_key = 'defaultsupersecretkey'
 
+try:
+    admin_password_file = open('/run/secrets/session_key ', "r")
+    admin_password = admin_password_file.read()
+    admin_password_file.close()
+except FileNotFoundError:
+    admin_password = 'Administrator@1'
+
 
 MAX_INPUT_LENGTH = 50
 app = Flask(__name__)

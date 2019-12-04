@@ -1,0 +1,7 @@
+version: '3'
+services:
+  roman-awesome-spell_checker:
+    image: unit4
+    build: .
+    ports:
+      - "8080:8080"

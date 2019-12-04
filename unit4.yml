@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  roman-awesome-spell_checker:
+    image: unit4
+    build: .
+    deploy:
+      replicas: 4
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: '50M'
+    ports:
+      - "8080:8080"
+    secrets:
+      - session_key
+      - admin_password
+secrets:
+  session_key:
+    external: True 
+  admin_password:
+    external: True
