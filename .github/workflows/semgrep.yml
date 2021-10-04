@@ -22,7 +22,7 @@ jobs:
           config:
             p/r2c-security-audit
             p/r2c-ci
-	    p/owasp-top-ten
+            p/owasp-top-ten
 
         # == Optional settings in the `with:` block
 
