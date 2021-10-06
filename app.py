@@ -341,9 +341,9 @@ def login():
         session.pop('csrf_token', None)
 
         if not validate_registration_or_login(uname, pword, two_fa):
-            set_status('Login failed - invalid input', request.form.get'uname')
+            set_status('Login failed - invalid input', 'result')
             session['csrf_token'] = str(random())  # Implement basic CSRF protection
-            return render_template('login.html', status=get_status(), usern=request.form.get('uname') csrf_token=session.get('csrf_token'))
+            return render_template('login.html', status=get_status(), usern=request.form.get('uname'), csrf_token=session.get('csrf_token'))
 
         (login_result, user_record) = login_user(uname, pword, two_fa)
         if is_status() or not login_result:
