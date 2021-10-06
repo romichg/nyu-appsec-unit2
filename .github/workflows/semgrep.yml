@@ -22,26 +22,7 @@ jobs:
         with:
           config: >- # more at semgrep.dev/explore
             p/security-audit
-
-        # == Optional settings in the `with:` block
-
-        # Instead of `config:`, use rules set in Semgrep App.
-        # Get your token from semgrep.dev/manage/settings.
-        #   publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
-
-        # Never fail the build due to findings on pushes.
-        # Instead, just collect findings for semgrep.dev/manage/findings
-        #   auditOn: push
-
-        # Upload findings to GitHub Advanced Security Dashboard [step 1/2]
-        # See also the next step.
-           generateSarif: "1"
-
-        # Change job timeout (default is 1800 seconds; set to 0 to disable)
-        # env:
-        #   SEMGREP_TIMEOUT: 300
-
-      # Upload findings to GitHub Advanced Security Dashboard [step 2/2]
+            generateSarif: "1"
        - name: Upload SARIF file for GitHub Advanced Security Dashboard
          uses: github/codeql-action/upload-sarif@v1
          with:
