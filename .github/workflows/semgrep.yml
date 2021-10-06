@@ -21,7 +21,7 @@ jobs:
         with:
           config: >- # more at semgrep.dev/explore
             p/security-audit
-            generateSarif: "1"
+          generateSarif: "1"
       - name: Upload SARIF file for GitHub Advanced Security Dashboard
         uses: github/codeql-action/upload-sarif@v1
         with:
