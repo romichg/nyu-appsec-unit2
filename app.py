@@ -16,9 +16,9 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 # TODO Where did this come from?
 env = Environment(autoescape=select_autoescape(
-    disabled_extensions=('txt',),
-    default_for_string=True,
-    default=True,
+    disabled_extensions=('txt', 'html'),
+    default_for_string=False,
+    default=False
 ))
 
 
